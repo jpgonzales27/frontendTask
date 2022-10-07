@@ -10,6 +10,31 @@ export const TaskList = () => {
     setTareas(data);
   };
 
+  const elimiarTarea = async (id) => {
+    //como nuestro backend no devuelve un json no es necesario
+    // alamacenarlo y convertir la data de la tarea
+
+    //? si devolviera algo esta seria la solucion
+    // const res = await fetch(`http://localhost:4000/tasks/${id}`, {
+    //   method: "DELETE",
+    // });
+    // const data = await res.json();
+    // console.log(data);
+
+    try {
+      //*elimina en la BD
+      await fetch(`http://localhost:4000/tasks/${id}`, {
+        method: "DELETE",
+      });
+
+      //*debemos eliminar en la UI
+      const tareasActualizadas = tareas.filter((tarea) => tarea.id !== id);
+      setTareas(tareasActualizadas);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   useEffect(() => {
     cargarTareas();
   }, []);
@@ -42,7 +67,7 @@ export const TaskList = () => {
               <Button
                 variant="contained"
                 color="error"
-                onClick={() => console.log("delete")}
+                onClick={() => elimiarTarea(tarea.id)}
                 style={{ marginLeft: ".5rem" }}
               >
                 Eliminar
