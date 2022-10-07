@@ -8,7 +8,7 @@ import {
   CircularProgress,
 } from "@mui/material";
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 
 export const TaskForm = () => {
   const [tarea, setTarea] = useState({
@@ -17,8 +17,10 @@ export const TaskForm = () => {
   });
 
   const [loading, setLoading] = useState(false);
+  const [editando, setEditando] = useState(false);
 
   const navigate = useNavigate();
+  const params = useParams();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -26,18 +28,19 @@ export const TaskForm = () => {
 
     setLoading(true);
 
-    //Usando fetch enviamos nuestra tarea al endpoint deseado
-    const res = await fetch("http://localhost:4000/tasks", {
-      //definimos el metodo de la peticion
-      method: "POST",
-      //debemos converitir nuestro objeto a string
-      body: JSON.stringify(tarea),
-      //definimos el formato para que la app entienda que le enviamos un JSON
-      headers: { "Content-Type": "application/json" },
-    });
-
-    const data = await res.json();
-    console.log(data);
+    if (!editando) {
+      await fetch("http://localhost:4000/tasks", {
+        method: "POST",
+        body: JSON.stringify(tarea),
+        headers: { "Content-Type": "application/json" },
+      });
+    } else {
+      await fetch(`http://localhost:4000/tasks/${params.id}`, {
+        method: "PUT",
+        body: JSON.stringify(tarea),
+        headers: { "Content-Type": "application/json" },
+      });
+    }
 
     setLoading(false);
     navigate("/");
@@ -51,6 +54,21 @@ export const TaskForm = () => {
     });
   };
 
+  const buscarTarea = async (id) => {
+    const res = await fetch(`http://localhost:4000/tasks/${id}`);
+    const data = await res.json();
+    // setTarea(data);
+    setTarea({ title: data.title, description: data.description });
+    setEditando(true);
+  };
+
+  useEffect(() => {
+    console.log(params);
+    if (params.id) {
+      buscarTarea(params.id);
+    }
+  }, [params.id]);
+
   return (
     <Grid
       container
@@ -61,7 +79,7 @@ export const TaskForm = () => {
       <Grid item xs={3}>
         <Card sx={{ mt: 5 }} style={{ padding: "1rem" }}>
           <Typography variant="5" textAlign="center">
-            Crear Tarea
+            {editando ? "Editar Tarea" : "Crear Tarea"}
           </Typography>
           <CardContent>
             <form onSubmit={handleSubmit}>
@@ -71,6 +89,7 @@ export const TaskForm = () => {
                 label="Titulo"
                 sx={{ display: "block", margin: ".5rem 0" }}
                 onChange={handleChange}
+                value={tarea.title}
               />
               <TextField
                 name="description"
@@ -80,6 +99,7 @@ export const TaskForm = () => {
                 rows={4}
                 sx={{ display: "block", margin: ".5rem 0" }}
                 onChange={handleChange}
+                value={tarea.description}
               />
               <Button
                 variant="contained"
@@ -90,7 +110,7 @@ export const TaskForm = () => {
                 {loading ? (
                   <CircularProgress color="inherit" size={25} />
                 ) : (
-                  "Save"
+                  "Guardar"
                 )}
               </Button>
             </form>
